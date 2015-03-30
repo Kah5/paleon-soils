@@ -1,6 +1,7 @@
 # paleon-soils
 This repository contains soil parameters from STATSGO database that have been rasterized on the Paleon 8km albers grid. Code for reading them into R is here as well
 
+Citation for STATSGO data: Soil Survey Staff, Natural Resources Conservation Service, United States Department of Agriculture. Web Soil Survey. Available online at http://websoilsurvey.nrcs.usda.gov/. Accessed [3/20/2015].
 
 ksat: The amount of water that would move vertically through a unit area of saturated soil in unit time under unit hydraulic gradient.
 The rasters in this directory include rasters on the 8km PalEON Albers grid over the Midwest (IL, IN, MN, MI). 

@@ -48,7 +48,7 @@ proj4string(clay)<-CRS('+proj=aea +lat_1=42.122774 +lat_2=49.01518 +lat_0=45.568
 plot(clay)
 clay.df<-as.data.frame(clay, xy=TRUE)
 
-#for elev
+#for elev from statsgo
 elev<-raster("paleon_elev.asc")
 proj4string(elev)<-CRS('+proj=aea +lat_1=42.122774 +lat_2=49.01518 +lat_0=45.568977 +lon_0=-83.248627 +x_0=1000000 +y_0=1000000 +ellps=GRS80 +datum=NAD83 +units=m +no_defs')
 plot(elev)

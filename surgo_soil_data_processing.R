@@ -53,3 +53,12 @@ elev<-raster("paleon_elev.asc")
 proj4string(elev)<-CRS('+proj=aea +lat_1=42.122774 +lat_2=49.01518 +lat_0=45.568977 +lon_0=-83.248627 +x_0=1000000 +y_0=1000000 +ellps=GRS80 +datum=NAD83 +units=m +no_defs')
 plot(elev)
 elev.df<-as.data.frame(elev, xy=TRUE)
+
+
+#read in biomass data
+biomass<-read.csv('plss_biomass_v0.9-1.csv')#or gridded total biomass
+coordinates(biomass)<-~x+y
+proj4string(biomass)<-CRS('+proj=aea +lat_1=42.122774 +lat_2=49.01518 +lat_0=45.568977 +lon_0=-83.248627 +x_0=1000000 +y_0=1000000 +ellps=GRS80 +datum=NAD83 +units=m +no_defs')
+
+
+plot(biomass)

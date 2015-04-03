@@ -30,54 +30,7 @@ ksat2.df <- as.data.frame(ksat2, xy=TRUE, cellnumbers=TRUE) #adding xy=TRUE outp
 
 write.csv(ksat2.df, "ksat.soil.csv")
 
-ksat.bycell<-extract(ksat2,biomass.df$cell)
-# match(ksat.bycell,biomass) #this returns all NA's
 
-
-##Repeat this process for the rest of the soil characters
-##for AWC
-awc <- raster("Data/paleon_awc.asc")
-proj4string(awc) <- CRS('+proj=aea +lat_1=42.122774 +lat_2=49.01518 +lat_0=45.568977 +lon_0=-83.248627 +x_0=1000000 +y_0=1000000 +ellps=GRS80 +datum=NAD83 +units=m +no_defs')
-plot(awc)
-awc <- resample(awc, input)
-awc.df <- as.data.frame(awc, xy=TRUE)
-
-write.csv(awc.df, "awc.soil.csv")
-
-##for sand
-sand <- raster("Data/paleon_sand.asc")
-proj4string(sand) <- CRS('+proj=aea +lat_1=42.122774 +lat_2=49.01518 +lat_0=45.568977 +lon_0=-83.248627 +x_0=1000000 +y_0=1000000 +ellps=GRS80 +datum=NAD83 +units=m +no_defs')
-plot(sand)
-sand <- resample(sand, input)
-sand.df <- as.data.frame(sand, xy=TRUE)
-
-write.csv(sand.df, "sand.soil.csv")
-
-##for silt
-silt <- raster("Data/paleon_silt.asc")
-proj4string(silt) <- CRS('+proj=aea +lat_1=42.122774 +lat_2=49.01518 +lat_0=45.568977 +lon_0=-83.248627 +x_0=1000000 +y_0=1000000 +ellps=GRS80 +datum=NAD83 +units=m +no_defs')
-plot(silt)
-silt <- resample(silt, input)
-silt.df <- as.data.frame(silt, xy=TRUE)
-
-write.csv(silt.df, "silt.soil.csv")
-
-##for clay
-clay <- raster("Data/paleon_clay.asc")
-proj4string(clay) <- CRS('+proj=aea +lat_1=42.122774 +lat_2=49.01518 +lat_0=45.568977 +lon_0=-83.248627 +x_0=1000000 +y_0=1000000 +ellps=GRS80 +datum=NAD83 +units=m +no_defs')
-plot(clay)
-clay <- resample(clay, input)
-clay.df <- as.data.frame(clay, xy=TRUE)
-
-write.csv(clay.df, "clay.soil.csv")
-
-#for elev from statsgo
-elev<-raster("Data/paleon_elev.asc")
-proj4string(elev) <- CRS('+proj=aea +lat_1=42.122774 +lat_2=49.01518 +lat_0=45.568977 +lon_0=-83.248627 +x_0=1000000 +y_0=1000000 +ellps=GRS80 +datum=NAD83 +units=m +no_defs')
-plot(elev)
-elev <-resample(elev, input)
-elev.cell <- extract(elev,extent(elev))
-elev.df <- as.data.frame(elev, xy=TRUE)
 
 
 ##this biomass data does not have the same x and y values as the statistical model
@@ -91,6 +44,11 @@ values(biomass)<-biomass
 proj4string(biomass) <- CRS('+proj=aea +lat_1=42.122774 +lat_2=49.01518 +lat_0=45.568977 +lon_0=-83.248627 +x_0=1000000 +y_0=1000000 +ellps=GRS80 +datum=NAD83 +units=m +no_defs')
 
 
-sample.merged.data<-merge(biomass.df, ksat.df, by= "cell")
+sample.merged.data<-merge(biomass.df, ksat.df, by= "cell") #tried merging dataframes using "merge" function
 
+
+ksat.bycell<-extract(ksat2,biomass.df$cell)#this creates a dataframe with some of the data that we want 
+#not sure if extract should need biomass as a spatial object, rather than a dataframe
+
+matched<-match(ksat.bycell,biomass) #this does not work
 

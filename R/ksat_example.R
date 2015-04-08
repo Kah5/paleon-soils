@@ -17,12 +17,14 @@ input.df<-as.data.frame(input, xy=TRUE)
 ##example for ksat
 ksat<-raster("Data/paleon_ksat.asc")
 #define Albers projcetion for this layer
-proj4string(ksat)<-CRS('+proj=aea +lat_1=42.122774 +lat_2=49.01518 +lat_0=45.568977 +lon_0=-83.248627 +x_0=1000000 +y_0=1000000 +ellps=GRS80 +datum=NAD83 +units=m +no_defs')
+proj4string(ksat)<-CRS('+init=epsg:3175')
+
+#proj4string(ksat)<-CRS('+proj=aea +lat_1=42.122774 +lat_2=49.01518 +lat_0=45.568977 +lon_0=-83.248627 +x_0=1000000 +y_0=1000000 +ellps=GRS80 +datum=NAD83 +units=m +no_defs')
 plot(ksat) #note that the extent of these data goes beyond statistical output
 ###can't use extract because ksat is a "RasterLayer", not a raster
 
-ksat <- resample(ksat, input) #resample ksat based on the psleon8km_midalbers1 grid created above
-ksat2<-brick(ksat, input) #ksat has values of soil parameter, while input has values of "cell number of interest"
+ksat3 <- resample(ksat, input, method='ngb') #resample ksat based on the psleon8km_midalbers1 grid created above
+ksat2<-stack(ksat3, input) #ksat has values of soil parameter, while input has values of "cell number of interest"
 #ksat$cell <- setValues(ksat, 1:ncell(ksat)) #not sure if this is a valid thing to do, but this creates RasterBrick
 
 #need to convert this raster to a dataframe to work with the data
@@ -38,17 +40,8 @@ write.csv(ksat2.df, "ksat.soil.csv")
 biomass <- read.csv('Data/plss_biomass_alb_v0.9-3.csv')#this is gridded non-biomass model biomass
 biomass.df<-data.frame(biomass)
 coordinates(biomass) <- ~x+y
-biomass <- raster(biomass)
-values(biomass)<-biomass
 
+biomass$soil <- extract(ksat3, biomass) # this extracts the ksat value for each biomass cell of the biomass dataframe
 proj4string(biomass) <- CRS('+proj=aea +lat_1=42.122774 +lat_2=49.01518 +lat_0=45.568977 +lon_0=-83.248627 +x_0=1000000 +y_0=1000000 +ellps=GRS80 +datum=NAD83 +units=m +no_defs')
 
-
-sample.merged.data<-merge(biomass.df, ksat.df, by= "cell") #tried merging dataframes using "merge" function
-
-
-ksat.bycell<-extract(ksat2,biomass.df$cell)#this creates a dataframe with some of the data that we want 
-#not sure if extract should need biomass as a spatial object, rather than a dataframe
-
-matched<-match(ksat.bycell,biomass) #this does not work
 

@@ -9,88 +9,128 @@ input <- raster('data/Abies_balsamea_diam_alb.tif') #this file came from biomass
 input <- setValues(input, 1:ncell(input))
 writeRaster(input, "paleon8km_midalbers1.tif", overwrite=TRUE)
 
-input.df<-as.data.frame(input, xy=TRUE)
+input.df <- as.data.frame(input, xy=TRUE)
 #setwd('location of your soil directory')
 
 
 ##read the soil rasters into R
-##example for ksat
-ksat<-raster("Data/paleon_ksat.asc")
+##example ksat
+ksat <- raster("Data/paleon_ksat.asc")
 #define Albers projcetion for this layer
-proj4string(ksat)<-CRS('+proj=aea +lat_1=42.122774 +lat_2=49.01518 +lat_0=45.568977 +lon_0=-83.248627 +x_0=1000000 +y_0=1000000 +ellps=GRS80 +datum=NAD83 +units=m +no_defs')
+proj4string(ksat) <- CRS('+init=epsg:3175')
 plot(ksat) #note that the extent of these data goes beyond statistical output
-###can't use extract because ksat is a "RasterLayer", not a raster
 
-ksat <- resample(ksat, input) #resample ksat based on the psleon8km_midalbers1 grid created above
-ksat2<-brick(ksat, input) #ksat has values of soil parameter, while input has values of "cell number of interest"
+##use resample to realign if the cells are off by a small amount
+ksat3 <- resample(ksat, input, method='ngb') #resample ksat based on the psleon8km_midalbers1 grid created above
+ksat2 <- stack(ksat3, input) #ksat has values of soil parameter, while input has values of "cell number of interest"
 #ksat$cell <- setValues(ksat, 1:ncell(ksat)) #not sure if this is a valid thing to do, but this creates RasterBrick
 
-#need to convert this raster to a dataframe to work with the data
+##need to convert this raster to a dataframe to work with the data
 ksat2.df <- as.data.frame(ksat2, xy=TRUE, cellnumbers=TRUE) #adding xy=TRUE outputs the x-y albers coordinates with the data value
+write.csv(ksat2.df, "ksat.soil.csv") #write to csv so you can haave it by itself
 
-write.csv(ksat2.df, "ksat.soil.csv")
-
-ksat.bycell<-extract(ksat2,biomass.df$cell)
-# match(ksat.bycell,biomass) #this returns all NA's
-
-
-##Repeat this process for the rest of the soil characters
-##for AWC
-awc <- raster("Data/paleon_awc.asc")
-proj4string(awc) <- CRS('+proj=aea +lat_1=42.122774 +lat_2=49.01518 +lat_0=45.568977 +lon_0=-83.248627 +x_0=1000000 +y_0=1000000 +ellps=GRS80 +datum=NAD83 +units=m +no_defs')
-plot(awc)
-awc <- resample(awc, input)
-awc.df <- as.data.frame(awc, xy=TRUE)
-
-write.csv(awc.df, "awc.soil.csv")
-
-##for sand
-sand <- raster("Data/paleon_sand.asc")
-proj4string(sand) <- CRS('+proj=aea +lat_1=42.122774 +lat_2=49.01518 +lat_0=45.568977 +lon_0=-83.248627 +x_0=1000000 +y_0=1000000 +ellps=GRS80 +datum=NAD83 +units=m +no_defs')
-plot(sand)
-sand <- resample(sand, input)
-sand.df <- as.data.frame(sand, xy=TRUE)
-
-write.csv(sand.df, "sand.soil.csv")
-
-##for silt
-silt <- raster("Data/paleon_silt.asc")
-proj4string(silt) <- CRS('+proj=aea +lat_1=42.122774 +lat_2=49.01518 +lat_0=45.568977 +lon_0=-83.248627 +x_0=1000000 +y_0=1000000 +ellps=GRS80 +datum=NAD83 +units=m +no_defs')
-plot(silt)
-silt <- resample(silt, input)
-silt.df <- as.data.frame(silt, xy=TRUE)
-
-write.csv(silt.df, "silt.soil.csv")
-
-##for clay
+##########################
+#Rest of the soil data
+##########################
+#clay
 clay <- raster("Data/paleon_clay.asc")
-proj4string(clay) <- CRS('+proj=aea +lat_1=42.122774 +lat_2=49.01518 +lat_0=45.568977 +lon_0=-83.248627 +x_0=1000000 +y_0=1000000 +ellps=GRS80 +datum=NAD83 +units=m +no_defs')
-plot(clay)
-clay <- resample(clay, input)
-clay.df <- as.data.frame(clay, xy=TRUE)
+#define Albers projcetion for this layer
+proj4string(clay) <- CRS('+init=epsg:3175')
+plot(clay) #note that the extent of these data goes beyond statistical output
+clay3 <- resample(clay, input, method='ngb') #resample ksat based on the psleon8km_midalbers1 grid created above
+clay2 <- stack(clay3, input) #ksat has values of soil parameter, while input has values of "cell number of interest"
+#ksat$cell <- setValues(ksat, 1:ncell(ksat)) #not sure if this is a valid thing to do, but this creates RasterBrick
 
-write.csv(clay.df, "clay.soil.csv")
+##need to convert this raster to a dataframe to work with the data
+clay3.df <- as.data.frame(clay3, xy=TRUE, cellnumbers=TRUE) #adding xy=TRUE outputs the x-y albers coordinates with the data value
+write.csv(clay3.df, "clay.soil.csv") 
 
-#for elev from statsgo
-elev<-raster("Data/paleon_elev.asc")
-proj4string(elev) <- CRS('+proj=aea +lat_1=42.122774 +lat_2=49.01518 +lat_0=45.568977 +lon_0=-83.248627 +x_0=1000000 +y_0=1000000 +ellps=GRS80 +datum=NAD83 +units=m +no_defs')
-plot(elev)
-elev <-resample(elev, input)
-elev.cell <- extract(elev,extent(elev))
-elev.df <- as.data.frame(elev, xy=TRUE)
+########################
+#sand
+#######################
+sand <- raster("Data/paleon_sand.asc")
+#define Albers projcetion for this layer
+proj4string(sand) <- CRS('+init=epsg:3175')
+plot(sand) #note that the extent of these data goes beyond statistical output
+sand3 <- resample(sand, input, method='ngb') #resample ksat based on the psleon8km_midalbers1 grid created above
+sand2 <- stack(sand3, input) #ksat has values of soil parameter, while input has values of "cell number of interest"
+#ksat$cell <- setValues(ksat, 1:ncell(ksat)) #not sure if this is a valid thing to do, but this creates RasterBrick
+
+##need to convert this raster to a dataframe to work with the data
+sand3.df <- as.data.frame(sand3, xy=TRUE, cellnumbers=TRUE) #adding xy=TRUE outputs the x-y albers coordinates with the data value
+write.csv(sand3.df, "sand.soil.csv")
+
+#####################
+#silt
+#####################
+silt <- raster("Data/paleon_silt.asc")
+#define Albers projcetion for this layer
+proj4string(silt) <- CRS('+init=epsg:3175')
+plot(silt) #note that the extent of these data goes beyond statistical output
+silt3 <- resample(silt, input, method='ngb') #resample ksat based on the psleon8km_midalbers1 grid created above
+silt2 <- stack(silt3, input) #ksat has values of soil parameter, while input has values of "cell number of interest"
+#ksat$cell <- setValues(ksat, 1:ncell(ksat)) #not sure if this is a valid thing to do, but this creates RasterBrick
+
+##need to convert this raster to a dataframe to work with the data
+silt3.df <- as.data.frame(silt3, xy=TRUE, cellnumbers=TRUE) #adding xy=TRUE outputs the x-y albers coordinates with the data value
+write.csv(silt3.df, "silt.soil.csv")
+
+#######################
+#elev
+#######################
+elev <- raster("Data/paleon_elev.asc")
+#define Albers projcetion for this layer
+proj4string(elev) <- CRS('+init=epsg:3175')
+plot(elev) #note that the extent of these data goes beyond statistical output
+elev3 <- resample(elev, input, method='ngb') #resample ksat based on the psleon8km_midalbers1 grid created above
+elev2 <- stack(elev3, input) #ksat has values of soil parameter, while input has values of "cell number of interest"
+#ksat$cell <- setValues(ksat, 1:ncell(ksat)) #not sure if this is a valid thing to do, but this creates RasterBrick
+
+##need to convert this raster to a dataframe to work with the data
+elev3.df <- as.data.frame(elev3, xy=TRUE, cellnumbers=TRUE) #adding xy=TRUE outputs the x-y albers coordinates with the data value
+write.csv(elev3.df, "clay.soil.csv")
+######################
+#awc
+#####################
+awc <- raster("Data/paleon_awc.asc")
+#define Albers projcetion for this layer
+proj4string(awc) <- CRS('+init=epsg:3175')
+plot(awc) #note that the extent of these data goes beyond statistical output
+awc3 <- resample(awc, input, method='ngb') #resample ksat based on the psleon8km_midalbers1 grid created above
+awc2 <- stack(awc3, input) #ksat has values of soil parameter, while input has values of "cell number of interest"
+#ksat$cell <- setValues(ksat, 1:ncell(ksat)) #not sure if this is a valid thing to do, but this creates RasterBrick
+
+##need to convert this raster to a dataframe to work with the data
+awc3.df <- as.data.frame(awc3, xy=TRUE, cellnumbers=TRUE) #adding xy=TRUE outputs the x-y albers coordinates with the data value
+write.csv(awc3.df, "awc.soil.csv")
 
 
-##this biomass data does not have the same x and y values as the statistical model
-#therefore, this biomass grid does not match up when I try to merge the biomass data with the soil data
+###################################
+#Add soil to the biomass data grid#
+###################################
 biomass <- read.csv('Data/plss_biomass_alb_v0.9-3.csv')#this is gridded non-biomass model biomass
-biomass.df<-data.frame(biomass)
-coordinates(biomass) <- ~x+y
-biomass <- raster(biomass)
-values(biomass)<-biomass
+coordinates(biomass) <- ~x+y #assign coordinates to make biomass spatial points datframe
+
+biomass$ksat <- extract(ksat3, biomass) # this extracts the ksat value for each biomass cell of the biomass dataframe
+biomass$sand <- extract(sand3, biomass) 
+biomass$silt <- extract(silt3, biomass) 
+biomass$clay <- extract(clay3, biomass) 
+biomass$awc <- extract(awc3, biomass) 
+biomass$elev <- extract(elev3, biomass) 
 
 proj4string(biomass) <- CRS('+proj=aea +lat_1=42.122774 +lat_2=49.01518 +lat_0=45.568977 +lon_0=-83.248627 +x_0=1000000 +y_0=1000000 +ellps=GRS80 +datum=NAD83 +units=m +no_defs')
 
+spplot(biomass, "ksat")
+spplot(biomass, "sand")
+spplot(biomass, "silt")
+spplot(biomass, "clay")
+spplot(biomass, "awc")
+spplot(biomass, "elev")
+biomass.df <- data.frame(biomass) #export the data as a dataframe
 
-sample.merged.data<-merge(biomass.df, ksat.df, by= "cell")
+#make a dataframe with only the soil data
+soils.df <- biomass.df
+soils<- c("x", "y", "sand", "silt", "clay", "awc", "ksat", "elev")
+soils.df <- soils.df[,soils]
 
-
+write.csv(soils.df, "StatsGO2.soil.covariates.csv")

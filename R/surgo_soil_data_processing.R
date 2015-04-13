@@ -108,9 +108,13 @@ write.csv(awc3.df, "awc.soil.csv")
 ###################################
 #Add soil to the biomass data grid#
 ###################################
-biomass <- read.csv('Data/plss_biomass_alb_v0.9-3.csv')#this is gridded non-biomass model biomass
+biomass <- read.csv('biomass_v09_extract (1).csv')#this is gridded non-biomass model biomass
+biomass$total <- rowSums(biomass[,5:33])
 coordinates(biomass) <- ~x+y #assign coordinates to make biomass spatial points datframe
-
+proj4string(biomass) <- CRS('+proj=aea +lat_1=42.122774 +lat_2=49.01518 +lat_0=45.568977 +lon_0=-83.248627 +x_0=1000000 +y_0=1000000 +ellps=GRS80 +datum=NAD83 +units=m +no_defs')
+rast<-awc
+Oak.biomass<- rasterize(biomass, rast, field = "Oak")
+tot.biomass <- rasterize(biomass, rast, field = "total")
 biomass$ksat <- extract(ksat3, biomass) # this extracts the ksat value for each biomass cell of the biomass dataframe
 biomass$sand <- extract(sand3, biomass) 
 biomass$silt <- extract(silt3, biomass) 
@@ -118,7 +122,6 @@ biomass$clay <- extract(clay3, biomass)
 biomass$awc <- extract(awc3, biomass) 
 biomass$elev <- extract(elev3, biomass) 
 
-proj4string(biomass) <- CRS('+proj=aea +lat_1=42.122774 +lat_2=49.01518 +lat_0=45.568977 +lon_0=-83.248627 +x_0=1000000 +y_0=1000000 +ellps=GRS80 +datum=NAD83 +units=m +no_defs')
 
 spplot(biomass, "ksat")
 spplot(biomass, "sand")

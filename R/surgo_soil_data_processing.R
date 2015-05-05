@@ -96,7 +96,7 @@ awc <- raster("Data/paleon_awc.asc")
 #define Albers projcetion for this layer
 proj4string(awc) <- CRS('+init=epsg:3175')
 plot(awc) #note that the extent of these data goes beyond statistical output
-awc3 <- resample(awc, input, method='ngb') #resample ksat based on the psleon8km_midalbers1 grid created above
+awc3 <- resample(awc, ksat, method='ngb') #resample ksat based on the psleon8km_midalbers1 grid created above
 awc2 <- stack(awc3, input) #ksat has values of soil parameter, while input has values of "cell number of interest"
 #ksat$cell <- setValues(ksat, 1:ncell(ksat)) #not sure if this is a valid thing to do, but this creates RasterBrick
 
@@ -108,27 +108,62 @@ write.csv(awc3.df, "awc.soil.csv")
 ###################################
 #Add soil to the biomass data grid#
 ###################################
-biomass <- read.csv('biomass_v09_extract (1).csv')#this is gridded non-biomass model biomass
-biomass$total <- rowSums(biomass[,5:33])
+biomass <- read.csv('Data/biomass_v09_extract (2).csv')#this is gridded non-biomass model biomass
+biomass$total <- rowSums(biomass[,5:32], na.rm = TRUE)
 coordinates(biomass) <- ~x+y #assign coordinates to make biomass spatial points datframe
 proj4string(biomass) <- CRS('+proj=aea +lat_1=42.122774 +lat_2=49.01518 +lat_0=45.568977 +lon_0=-83.248627 +x_0=1000000 +y_0=1000000 +ellps=GRS80 +datum=NAD83 +units=m +no_defs')
 rast<-awc
 Oak.biomass<- rasterize(biomass, rast, field = "Oak")
 tot.biomass <- rasterize(biomass, rast, field = "total")
-biomass$ksat <- extract(ksat3, biomass) # this extracts the ksat value for each biomass cell of the biomass dataframe
-biomass$sand <- extract(sand3, biomass) 
-biomass$silt <- extract(silt3, biomass) 
-biomass$clay <- extract(clay3, biomass) 
-biomass$awc <- extract(awc3, biomass) 
-biomass$elev <- extract(elev3, biomass) 
+biomass.tot<- biomass$total
 
 
+ksat.bio<-  extract(ksat3, biomass, fun= mean, weights=TRUE, na.rm=TRUE) # this extracts the ksat value for each biomass cell of the bi
+#ksat.bio[is.na(ksat.bio)]<- -9999
+biomass$ksat <- ksat.bio
+#biomass$ksat <- extract(ksat3, biomass, fun= mean, weights=TRUE, na.rm=TRUE) # this extracts the ksat value for each biomass cell of the biomass dataframe
+biomass.sand <- extract(sand3, biomass) 
+#biomass.sand[is.na(biomass.sand)] <- -9999
+biomass$sand <- biomass.sand
+
+biomass.silt <- extract(silt3, biomass) 
+#biomass.silt[is.na(biomass.silt)] <- -9999
+biomass$silt <- biomass.silt
+
+biomass.clay <- extract(clay3, biomass) 
+#biomass.clay[is.na(biomass.clay)] <- -9999
+biomass$clay <- biomass.clay
+
+biomass.awc <- extract(awc3, biomass) 
+#biomass.awc[is.na(biomass.awc)] <- -9999
+biomass$awc <- biomass.awc
+
+biomass.elev <- extract(elev3, biomass) 
+#biomass.elev[is.na(biomass.elev)] <- -9999
+biomass$elev <- biomass.elev
+
+#write csv with soil covariates
+write.csv(biomass, "biomass_v09_extract_with_soil.csv")
+
+biomass.oak<- biomass$Oak 
+biomass.oak[is.na(biomass.oak)] <- -9999
+biomass$oak <- biomass.oak
+
+spplot(biomass, "oak")
+
+spplot(biomass, "total")
+
+pdf("NAsoilplots.pdf")
 spplot(biomass, "ksat")
 spplot(biomass, "sand")
 spplot(biomass, "silt")
 spplot(biomass, "clay")
 spplot(biomass, "awc")
 spplot(biomass, "elev")
+
+dev.off()
+
+
 biomass.df <- data.frame(biomass) #export the data as a dataframe
 
 #make a dataframe with only the soil data

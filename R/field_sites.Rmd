@@ -1,0 +1,252 @@
+---
+title: "Field Sites"
+author: "Kelly Heilman"
+date: "Friday, April 10, 2015"
+output: html_document
+---
+
+
+
+```{r}
+library(rgdal)
+McHenry<-readOGR("Potential Field Sites 2015.kml", layer="McHenry County Potential Sites")
+
+MN<-readOGR("C:/Users/Kelly/Documents/Eagleson/paleon-soils/Potential Field Sites 2015.kml", layer="Minnesota Potential field sites", verbose = FALSE)
+
+MO<- readOGR("C:/Users/Kelly/Documents/Eagleson/paleon-soils/Potential Field Sites 2015.kml", layer="Missouri Potential sites")
+
+IA<- readOGR("C:/Users/Kelly/Documents/Eagleson/paleon-soils/Potential Field Sites 2015.kml", layer="Iowa Potential Sites")
+
+IN<- readOGR("C:/Users/Kelly/Documents/Eagleson/paleon-soils/Potential Field Sites 2015.kml", layer="Indiana potential Field sits")
+
+IL<- readOGR("C:/Users/Kelly/Documents/Eagleson/paleon-soils/Potential Field Sites 2015.kml", layer="Illinois")
+
+WI<- readOGR("C:/Users/Kelly/Documents/Eagleson/paleon-soils/Potential Field Sites 2015.kml", layer="Pleasant Valley Conservancy")
+
+
+
+#transform IL pts into Great Lakes Albers
+IL.pt<- spTransform(x = IL, CRSobj = CRS('+init=epsg:3175'))
+MN.pt <- spTransform(x = MN, CRSobj = CRS('+init=epsg:3175'))
+IN.pt <- spTransform(x = IN, CRSobj = CRS('+init=epsg:3175'))
+MO.pt <- spTransform(x = MO, CRSobj = CRS('+init=epsg:3175'))
+WI.pt <- spTransform(x = WI, CRSobj = CRS('+init=epsg:3175'))
+McHenry.pt <- spTransform(x = McHenry, CRSobj = CRS('+init=epsg:3175'))
+IA.pt <- spTransform(x = IA, CRSobj = CRS('+init=epsg:3175'))
+
+
+##load in the biomass data
+biomass <- read.csv('Data/biomass_prediction_v0.2-1.csv')
+#read in the indiana and illinois data
+biomass.inil<- read.csv('C:/Users/Kelly/Documents/Indiana_Density_Biomass/Data/outputsplss_biomass_indiana_illinois_v1.csv')
+biomass.inil$total <- rowSums(biomass.inil[,5:36], na.rm = TRUE)
+#biomass<- biomass[1:7376,]
+biomass$total <- rowSums(biomass[,4:25])
+keeps <- names(biomass) 
+bio.inil.keep <- biomass.inil[colnames(biomass.inil) %in% keeps]
+keeps2 <- names(bio.inil.keep)
+bio.wimn.keep <- biomass[colnames(biomass) %in% keeps2]
+
+full.biomass <- rbind(bio.wimn.keep, bio.inil.keep)
+
+coordinates(full.biomass) <- ~x+y #assign coordinates to make biomass spatial points datframe
+proj4string(full.biomass) <- CRS('+proj=aea +lat_1=42.122774 +lat_2=49.01518 +lat_0=45.568977 +lon_0=-83.248627 +x_0=1000000 +y_0=1000000 +ellps=GRS80 +datum=NAD83 +units=m +no_defs')
+rast<-awc
+#create rastes of oak and total biomass
+gridded(full.biomass)<-TRUE
+proj4string(full.biomass)<- CRS('+init=epsg:3175')
+biomass <- full.biomass
+#Oak.biomass<- raster(biomass)
+
+#create raster for total biomass and a raster brick for all species
+total.biomass <- raster(biomass, layer ="total")
+brick.biomass <- brick(biomass)
+biomass$ksat <- extract(ksat3, biomass) # this extracts the ksat value for each biomass cell of the biomass dataframe
+#biomass$sand <- extract(sand3, biomass) 
+#biomass$silt <- extract(silt3, biomass) 
+#biomass$clay <- extract(clay3, biomass) 
+#biomass$awc <- extract(awc3, biomass) 
+#biomass$elev <- extract(elev3, biomass) 
+
+states.albers<-readOGR(".", layer="us_alb")
+states.albers<- spTransform(states.albers,CRSobj = CRS('+init=epsg:3175'))
+# convert $Descriptions to color names.
+colors <- data.frame(Description = c(1,2,3,4,5,6,7,8), col=c("yellow", "blue", "green", "cyan", "black", "red", "tan2", "magenta"))
+
+#col<-c("yellow", "blue", "green", "brown", "black", "red", "purple")
+IL.pt.test <-merge( colors, IL.pt, by ="Description") 
+IL.pt$col <- IL.pt.test$col
+IL.pt$col[2]<-"tan2" #convert shawnee woods to "all"
+IL.pt$col[1]<-"tan2" #convert mchenry county to "all"
+IN.pt.test <-merge( colors, IN.pt, by ="Description") 
+IN.pt$col <- IN.pt.test$col
+IA.pt.test <-merge( colors, IA.pt, by ="Description") 
+IA.pt$col <- IA.pt.test$col
+MO.pt.test <-merge( colors, MO.pt, by ="Description") 
+MO.pt$col <- MO.pt.test$col
+WI.pt.test <-merge( colors, WI.pt, by ="Description") 
+WI.pt$col <- WI.pt.test$col
+MN.levels<- MN.pt$Description
+MN.levels <- as.numeric(as.character(MN.levels))
+MN.levels[is.na(MN.levels)]<-8
+MN.pt$Description <- MN.levels
+MN.pt.test <-merge(colors, MN.pt, by ="Description")
+MN.pt$col <- MN.pt.test$col
+```
+
+You can also embed plots, for example:
+
+```{r, echo=FALSE}
+pdf("potential_field_sites.pdf")
+plot(states.albers, xlim =c(-41944.13, 966056), ylim=c(66412.68, 1490413))
+points(IL.pt, col= as.character(IL.pt$col), pch=15)
+#text(IL.pt, IL.pt$Name, cex = 0.4, pos= 2)
+points(IN.pt, col=as.character(IN.pt$col) , pch = 15)
+#text(IN.pt, IN.pt$Name, cex = 0.4, pos= 4)
+points(MN.pt, col=as.character(MN.pt$col), pch = 15)
+#text(MN.pt, MN.pt$Name, cex = 0.4, pos= c(4,2,3,2,4,2,4,4,4,2))
+points(MO.pt,col=as.character(MO.pt$col), pch =15)
+#text(MO.pt, MO.pt$Name, cex = 0.4, pos = 3)
+points(IA.pt, col=as.character(IA.pt$col), pch = 15)
+#text(IA.pt, IA.pt$Name, cex = 0.4, pos = 3)
+points(WI.pt, WI.pt$col, pch =15)
+#text(WI.pt, WI.pt$Name, cex = 0.4, pos = 3)
+legend("topright", c("dry savanna", "mesic savanna", "oak woodland", "dry sav. & mesic sav.", "dry sav. & woodlands","mesic sav. & woodlands", "all three", "prairie only" ),col=c("yellow", "blue", "green", "cyan", "black", "red", "tan2", "magenta"), pch=15)
+
+#load in earth raster and project into albers
+earth<-raster("NE2_50M_SR_W//NE2_50M_SR_W.tif")
+quick.subset <- function(x, longlat){
+ 
+# longlat should be a vector of four values: c(xmin, xmax, ymin, ymax)
+  x@data$id <- rownames(x@data)
+ 
+  x.f = fortify(x, region="id")
+  x.join = join(x.f, x@data, by="id")
+ 
+  x.subset <- subset(x.join, x.join$long > longlat[1] & x.join$long < longlat[2] &
+                           x.join$lat > longlat[3] & x.join$lat < longlat[4])
+ 
+  x.subset
+}
+ 
+domain <- c(-100.6, -66.1, 36.5, 49.7)
+nat.crop <- crop(earth, y=extent(domain))
+ 
+rast.table <- data.frame(xyFromCell(nat.crop, 1:ncell(nat.crop)),
+                         getValues(nat.crop/255))
+require(rgdal)
+library(raster)
+
+crop.alb<- projectRaster(nat.crop, crs= '+init=epsg:3175')
+
+plot(crop.alb,col=topo.colors(10), breaks=5)
+plot(states.albers, xlim =c(-41944.13, 966056), ylim=c(66412.68, 1490413))
+points(IL.pt, col= as.character(IL.pt$col), pch=15)
+#text(IL.pt, IL.pt$Name, cex = 0.4, pos= 2)
+points(IN.pt, col=as.character(IN.pt$col) , pch = 15)
+#text(IN.pt, IN.pt$Name, cex = 0.4, pos= 4)
+points(MN.pt, col=as.character(MN.pt$col), pch = 15)
+#text(MN.pt, MN.pt$Name, cex = 0.4, pos= c(4,2,3,2,4,2,4,4,4,2))
+points(MO.pt,col=as.character(MO.pt$col), pch =15)
+#text(MO.pt, MO.pt$Name, cex = 0.4, pos = 3)
+points(IA.pt, col=as.character(IA.pt$col), pch = 15)
+#text(IA.pt, IA.pt$Name, cex = 0.4, pos = 3)
+points(WI.pt, WI.pt$col, pch =15)
+#text(WI.pt, WI.pt$Name, cex = 0.4, pos = 3)
+legend("topright", c("dry savanna", "mesic savanna", "oak woodland", "dry sav. & mesic sav.", "dry sav. & woodlands","mesic sav. & woodlands", "all three", "prairie only" ),col=c("yellow", "blue", "green", "cyan", "black", "red", "tan2", "magenta"), pch=15)
+
+
+
+
+
+library(maps)
+map.scale(x=15.5, y=42.75, ratio=FALSE, relwidth=0.2)
+library(GISTools)
+north.arrow(xb=-5000, yb=630412, len=15000, lab="N")
+
+-61944.13, 1066056), ylim=c(66412.68, 1490413))
+
+plot(sand, main ="sand")
+points(IL.pt, col = "black")
+points(IN.pt)
+points(MN.pt)
+points(MO.pt)
+points(IA.pt)
+points(WI.pt)
+plot(states.albers, add = TRUE)
+
+plot(silt, main ="silt")
+points(IL.pt)
+points(IN.pt)
+points(MN.pt)
+points(MO.pt)
+points(IA.pt)
+points(WI.pt)
+plot(states.albers, add = TRUE)
+
+plot(clay, main ="clay")
+points(IL.pt)
+points(IN.pt)
+points(MN.pt)
+points(MO.pt)
+points(IA.pt)
+points(WI.pt)
+plot(states.albers, add = TRUE)
+
+
+plot(brick.biomass$Oak, main = "Oak biomass", zlim = c(0,max(biomass$Oak)))
+points(IL.pt)
+points(IN.pt)
+points(MN.pt)
+points(MO.pt)
+points(IA.pt)
+points(WI.pt)
+plot(states.albers, add = TRUE)
+
+plot(total.biomass, main = "Total Biomass", zlim =c(0,max(biomass$total)))
+points(IL.pt)
+text(IL.pt, IL.pt$Name, cex = 0.5, pos= 2)
+points(IN.pt)
+text(IN.pt, IN.pt$Name, cex = 0.5, pos= 4)
+points(MN.pt)
+text(MN.pt, MN.pt$Name, cex = 0.5, pos= 4)
+points(MO.pt)
+text(MO.pt, MO.pt$Name, cex = 0.5, pos = 3)
+points(IA.pt)
+text(IA.pt, IA.pt$Name, cex = 0.5, pos = 3)
+points(WI.pt)
+text(WI.pt, WI.pt$Name, cex = 0.5, pos = 3)
+plot(states.albers, add = TRUE)
+
+
+dev.off()
+
+```
+
+```{r}
+#need to extract for all the points
+WI.df <- as.data.frame(WI.pt)
+IN.df <- as.data.frame(IN.pt)
+MO.df <- as.data.frame(MO.pt)
+MN.df <- as.data.frame(MN.pt)
+IL.df <- as.data.frame(IL.pt)
+IA.df <- as.data.frame(IA.pt)
+sites2015.df <- rbind(WI.df, IN.df, MO.df, MN.df, IL.df, IA.df)
+
+#extract values from soil and elevation data rasters made in script 'R/surgo_soil_data_processing.R'
+sites2015.df$ksat <- extract(ksat3, sites2015.df[,1:2])
+sites2015.df$sand <- extract(sand3, sites2015.df[,1:2])
+sites2015.df$silt <- extract(silt3, sites2015.df[,1:2])
+sites2015.df$clay <- extract(clay3, sites2015.df[,1:2])
+sites2015.df$awc <- extract(awc3, sites2015.df[,1:2])
+sites2015.df$elev <- extract(elev3, sites2015.df[,1:2])
+
+#exract site level biomass estimates
+species.biomass <- extract(brick.biomass, sites2015.df[,1:2])
+#create a dataframe with environmental variables and biomass
+site.level.data <- cbind(sites2015.df, species.biomass)
+
+
+
+```
+

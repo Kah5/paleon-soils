@@ -246,7 +246,10 @@ species.biomass <- extract(brick.biomass, sites2015.df[,1:2])
 #create a dataframe with environmental variables and biomass
 site.level.data <- cbind(sites2015.df, species.biomass)
 
-
+```
+Here I plot the sites in space, colored by soil and biomass
+```{r}
 
 ```
+
 
